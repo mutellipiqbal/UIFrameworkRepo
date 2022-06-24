@@ -1,0 +1,391 @@
+/*
+    The following enhanced methods/functions added to repo inorder to reduces QA effort and script writing time.
+    Author: Yikebali Mutalipu, 2022
+    Retrieves the first element
+     */
+    public WebElement findFirstElement(By selector) {
+        Log.info("Find the first element using selector : " + selector);
+        try {
+            this.waitForPageToLoad();
+
+            List<WebElement> elements = driver.findElements(selector);
+            if (elements == null || elements.size() == 0) {
+                throw new NoSuchElementException("Unable to locate an element using selector : " + selector);
+            }
+            if (elements.size() > 1) {
+                List<WebElement> visibleElement = elements.stream().filter(WebElement::isDisplayed).collect(Collectors.toList());
+                if (!visibleElement.isEmpty()) {
+                    elements = visibleElement;
+                }
+            }
+            return elements.get(0);
+        } catch (NoSuchElementException e) {
+            Log.warn("No element found with selector: " + selector);
+            Log.debug("Unable to find element : " + e);
+        }
+        return null;
+    }
+
+    /*
+    Gets an attribute value from the element
+     */
+    public String getElementAttribute(By selector, String attr) {
+        try {
+            WebElement element = driver.findElement(selector);
+            if (element == null) {
+                throw new NullPointerException("No elements found with selector : " + selector);
+            }
+            String attribute = element.getAttribute(attr);
+            if (attribute == null) {
+                throw new NullPointerException("No attribute found with attribute : " + attribute);
+            }
+            return attribute;
+        } catch (NullPointerException e) {
+            return "";
+        }
+    }
+
+    public String getElementAttribute(WebElement element, String attr) {
+        try {
+            if (element == null) {
+                throw new NullPointerException("No elements found with element : " + element);
+            }
+            String attribute = element.getAttribute(attr);
+            if (attribute == null) {
+                throw new NullPointerException("No attribute found with attribute : " + attribute);
+            }
+            return attribute;
+        } catch (NullPointerException e) {
+            return "";
+        }
+    }
+
+    /*
+    Get a random element from a group of elements
+     */
+    public WebElement getRandomElement(By selector) throws NoSuchElementException {
+        this.waitForPageToLoad();
+        List<WebElement> elements = driver.findElements(selector);
+        if (elements == null || elements.isEmpty()) {
+            throw new NoSuchElementException("No elements found with selector : " + selector);
+        } else {
+            Random random = new Random();
+            int randomElement = random.nextInt(elements.size());
+            return elements.get(randomElement);
+        }
+    }
+
+    /*
+    Get the text of an element or null if element does not exist.
+     */
+    public String getText(By selector) {
+        try {
+            WebElement element = driver.findElement(selector);
+            if (element == null) {
+                throw new NullPointerException();
+            }
+            return element.getText();
+        } catch (NullPointerException e) {
+            return "null";
+        }
+    }
+
+    public String getText(WebElement element) {
+        try {
+            if (element == null) {
+                throw new NullPointerException();
+            }
+            return element.getText();
+        } catch (NullPointerException e) {
+            return "null";
+        }
+    }
+
+	/*
+	Wait until the text of an element matches the given expected text
+	 */
+
+    public void waitUntilTextChanged(By selector, String expectedText, int waitTime) {
+        WebDriverWait wait = new WebDriverWait(driver, waitTime);
+        WebElement element = driver.findElement(selector);
+        wait.until(ExpectedConditions.textToBePresentInElement(element, expectedText));
+    }
+	public void waitUntilTextChanged(WebElement element, String expectedText, int waitTime) {
+		WebDriverWait wait = new WebDriverWait(driver, waitTime);
+		wait.until(ExpectedConditions.textToBePresentInElement(element, expectedText));
+	}
+
+    /*
+    Selects a dropdown menu by value
+     */
+	public void selectDropDownByValue(By selector, String value) {
+        waitForElementToAppear(selector);
+        WebElement element = driver.findElement(selector);
+        Select select = new Select(element);
+        select.selectByValue(value);
+    }
+	public void selectDropDownByValue(WebElement element, String value) {
+		waitForElementToAppear(element);
+		Select select = new Select(element);
+		select.selectByValue(value);
+	}
+
+    /*
+    Selects a dropdown menu by visible text
+     */
+	public void selectDropDownByVisibleText(By selector, String text) {
+        waitForElementToAppear(selector);
+        WebElement element = driver.findElement(selector);
+        Select select = new Select(element);
+        select.selectByVisibleText(text);
+    }
+
+	public void selectDropDownByVisibleText(WebElement element, String text) {
+		waitForElementToAppear(element);
+		Select select = new Select(element);
+		select.selectByVisibleText(text);
+	}
+
+    /*
+    Selects a dropdown menu by index
+     */
+	public void selectDropDownByIndex(By selector, int index) {
+        waitForElementToAppear(selector);
+        WebElement element = driver.findElement(selector);
+        Select select = new Select(element);
+        select.selectByIndex(index);
+    }
+	public void selectDropDownByIndex(WebElement element, int index) {
+		waitForElementToAppear(element);
+		Select select = new Select(element);
+		select.selectByIndex(index);
+	}
+
+	/*
+	Closes a web alert
+	 */
+    public void closeAlert() {
+        if (driver != null) {
+            try {
+                driver.switchTo().alert().accept();
+            } catch (org.openqa.selenium.NoAlertPresentException e) {
+                Log.warn("There has not an alert : " + e);
+            }
+        }
+    }
+
+	/*
+	Adding cookie by driver
+	 */
+    public void addingCookieByDriver(Map<String, String> cookies) {
+        String cookieKey = "Cookie.";
+        try {
+            WebDriver.Options options = driver.manage();
+            for (Map.Entry<String, String> entry : cookies.entrySet()) {
+                String name = entry.getKey().split(cookieKey)[1];
+                Cookie cookie = options.getCookieNamed(name);
+                if (cookie == null || !cookie.getValue().equals((entry.getValue()))) {
+                    options.addCookie(new Cookie(name, entry.getValue()));
+                    Log.warn("Successfully added cookie " + name + " = " + entry.getValue());
+                }
+            }
+        } catch (Exception e) {
+            Log.warn("Unable to add cookie from experimentation due to : " + e.getMessage());
+        }
+    }
+
+	/*
+	Adding cookie to browser local storage
+	 */
+    public void addingCookieByStorage(Map<String, String> localStorage) {
+
+        String localStorageKey = "Local.Storage.";
+        try {
+            for (Map.Entry<String, String> entry : localStorage.entrySet()) {
+                String name = entry.getKey().split(localStorageKey)[1];
+                JavascriptExecutor javascriptExecutor = (JavascriptExecutor) driver;
+                Object local = javascriptExecutor.executeScript("return window.localStorage.getItem(arguments[0]", name);
+                if (local == null || !local.equals(entry.getValue())) {
+                    javascriptExecutor.executeScript("window.localStorage.setItem(arguments[0], arguments[1]", name, entry.getValue());
+					Log.warn("Successfully added cookie " + name + " = " + entry.getValue());
+				}
+            }
+        } catch (Exception e) {
+            Log.warn("Unable to add local storage from experimentation due to : " + e.getMessage());
+        }
+    }
+
+    /*
+    Refresh the current page
+     */
+	public void refreshThePage() {
+        JavascriptExecutor executor = (JavascriptExecutor) driver;
+        try {
+            if (CommonData.getBrowserType().equalsIgnoreCase("Safari") || (CommonData.getBrowserType().equalsIgnoreCase("EI"))) {
+                executor.executeScript("document.location.reload()");
+            } else {
+                driver.navigate().refresh();
+            }
+        } catch (Exception e) {
+            executor.executeScript("return window.stop");
+        }
+        waitForPageToLoad();
+    }
+
+	/*
+	Closes a child window/browser tab
+	 */
+    public void closeBrowserTab(By selector) {
+        String originalWindow = driver.getWindowHandle();
+        Set<String> allWindows = driver.getWindowHandles();
+        WebElement newWindowClickElement = driver.findElement(selector);
+        newWindowClickElement.click();
+        Log.info("CLicked for switching to the child window.");
+        if (allWindows.size() > 1) {
+            for (String childWindow : allWindows) {
+                if (!originalWindow.contentEquals(childWindow)) {
+                    driver.switchTo().window(childWindow);
+                    Log.info("Switching to child window : " + childWindow);
+                    driver.close();
+                    Log.info("The child window is closed");
+                    break;
+                }
+            }
+            driver.switchTo().window(originalWindow);
+            Log.info("Switching to original window : " + originalWindow);
+        }
+    }
+
+	public void closeBrowserTab(WebElement webElement) {
+		String originalWindow = driver.getWindowHandle();
+		Set<String> allWindows = driver.getWindowHandles();
+		webElement.click();
+		Log.info("CLicked for switching to the child window.");
+		if (allWindows.size() > 1) {
+			for (String childWindow : allWindows) {
+				if (!originalWindow.contentEquals(childWindow)) {
+					driver.switchTo().window(childWindow);
+					Log.info("Switching to child window : " + childWindow);
+					driver.close();
+					Log.info("The child window is closed");
+					break;
+				}
+			}
+			driver.switchTo().window(originalWindow);
+			Log.info("Switching to original window : " + originalWindow);
+		}
+	}
+
+	/*
+	Checks a checkbox if it is not checked.
+	 */
+    public void selectCheckBox(By selector) {
+        WebElement checkbox = driver.findElement(selector);
+        if (checkbox != null && !checkbox.isSelected()) {
+            checkbox.click();
+        }
+    }
+
+	public void selectCheckBox(WebElement webElement) {
+		if (webElement != null && !webElement.isSelected()) {
+			webElement.click();
+		}
+	}
+
+	/*
+	Unchecks a checkbox if it is already checked.
+	 */
+    public void unSelectCheckBox(By selector) {
+        WebElement checkbox = driver.findElement(selector);
+        if (checkbox != null && checkbox.isSelected()) {
+            checkbox.click();
+        }
+    }
+
+	public void unSelectCheckBox(WebElement webElement) {
+		if (webElement != null && webElement.isSelected()) {
+			webElement.click();
+		}
+	}
+
+	/*
+	Hovers over an element
+	 */
+    public void hover(By selector, int time) {
+        new WebDriverWait(driver, time).until(ExpectedConditions.visibilityOfElementLocated(selector));
+        WebElement element = driver.findElement(selector);
+        Actions actions = new Actions(driver);
+        actions.moveToElement(element).build().perform();
+    }
+	public void hover(WebElement webElement, int time) {
+		new WebDriverWait(driver, time).until(ExpectedConditions.visibilityOf(webElement));
+		Actions actions = new Actions(driver);
+		actions.moveToElement(webElement).build().perform();
+	}
+
+	/*
+	Hovers over an element using JavaScript
+	 */
+    public void javaScriptHover(WebElement element) {
+        JavascriptExecutor executor = (JavascriptExecutor) driver;
+        executor.executeScript("if(document.createEvent){"
+                + "var evObj=document.createEvent('MouseEvents');"
+                + "evObj.initEvent('mouseover', true, false);"
+                + "arguments[0].focus; arguments[0].dispatchEvent(evObj);"
+                + "}else if(document.createEventObject){"
+                + "arguments[0].focus(); arguments[0].fireEvent('onmouseover');"
+                + "}", element);
+    }
+
+	/*
+	Clicks on element and holds for the given duration.
+	 */
+    public void longPress(WebElement element, long pause) {
+        Actions actions = new Actions(driver);
+        actions.clickAndHold(element).perform();
+        actions.pause(pause);
+    }
+
+	public void longPress(By selector, long pause) {
+		longPress(driver.findElement(selector),pause);
+	}
+
+	/*
+	Selects an element from a list using the given text
+	 */
+    public void clickElementByText(By selector, String find) {
+        List<WebElement> list = driver.findElements(selector);
+        if (list == null || find == null || list.size() == 0) {
+            Log.warn(list + " is empty.");
+        }
+        Optional<WebElement> element = list.stream().filter(WebElement::isDisplayed).filter(el -> el.isDisplayed() && el.getText().equalsIgnoreCase(find)).findFirst();
+        if (element.isPresent()) {
+			WebElement e=element.get();
+            e.click();
+        } else {
+            Log.warn("Element with text \"" + find + "\" not found!");
+        }
+    }
+
+
+
+    /*
+    Swipe from one element to another
+    This is equal to drag and drop
+     */
+    public void swiping(WebElement from, WebElement to) {
+        waitForPageToLoad();
+        if (driver instanceof AppiumDriver) {
+            AppiumDriver appiumDriver1 = (AppiumDriver) driver;
+            Dimension dimension = from.getSize();
+            Point upperLeft = from.getLocation();
+            Point fromCenter = new Point(upperLeft.getX() + dimension.getWidth() / 2, upperLeft.getY() + dimension.getHeight() / 2);
+            dimension = to.getSize();
+            upperLeft = to.getLocation();
+            Point toCenter = new Point(upperLeft.getX() + dimension.getWidth() / 2, upperLeft.getY() + dimension.getHeight() / 2);
+            appiumDriver1.swipe(fromCenter.x, fromCenter.y, toCenter.x, toCenter.y, 200);
+        } else {
+            Actions actions = new Actions(driver);
+            actions.dragAndDrop(from, to).perform();
+        }
+    }
