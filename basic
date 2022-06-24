@@ -1,6 +1,6 @@
 /*
     The following enhanced methods/functions added to repo inorder to reduces QA effort and script writing time.
-    Author: Yikebali Mutalipu, 2022
+    Author: ikbal, 2022
     Retrieves the first element
      */
     public WebElement findFirstElement(By selector) {
