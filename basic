@@ -405,3 +405,18 @@
             .moveTo(point(anchor, endPoint))
             .release().perform();
   }
+  
+  /*
+  Scrolls to footer
+   */
+  public void scrollToFooter(){
+    waitForPageToLoad();
+    ((JavascriptExecutor) driver).executeScript("window.scrollTo(0, document.body.scrollHeight)");
+  }
+  /*
+  Scrolls to header
+   */
+  public void scrollToHeader(){
+    waitForPageToLoad();
+    ((JavascriptExecutor) driver).executeScript("window.scrollTo(document.body.scrollHeight, 0)");
+  }
